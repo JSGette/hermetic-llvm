@@ -202,6 +202,48 @@ should only use the platforms_contrib constraints.
 To make code depend on the libc it's compiled against, `select()` on
 `@rules_cc//cc/libc:glibc` and `@rules_cc//cc/libc:musl`.
 
+### x86-64 CPU features and tuning
+
+x86-64 code is compiled for the CPU features that the target platform declares
+with [platforms_contrib](https://github.com/bazel-contrib/platforms_contrib)
+constraints:
+
+```starlark
+load("@platforms_contrib//cpu/x86_64:x86_64.bzl", "x86_64_level_constraints")
+
+platform(
+    name = "linux_x86_64_v3",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ] + x86_64_level_constraints("v3"),
+    flags = ["--@llvm//config:x86_64_tune_cpu=znver4"],
+)
+```
+
+The compiler always gets an explicit `-march`, feature flags and `-mtune`, so
+its own defaults for the target don't matter:
+
+* `-march` names the platform's `@platforms_contrib//cpu/x86_64:model` if it
+  declares one, followed by flags for every feature, as with `-march=native`.
+  Otherwise, it names the highest x86-64 microarchitecture level whose features
+  are all available (e.g. `-march=x86-64-v3`), followed by flags for the
+  features beyond it.
+* `-mtune` names `--@llvm//config:x86_64_tune_cpu` if set, the platform's model
+  otherwise and `generic` if it has none, as clang would do without `-mtune`.
+
+With `--platforms @platforms_contrib//host:native`, which declares the host's
+features and model, this matches `-march=native`, but keeps the build
+independent of the machine that runs the compiler.
+
+Platforms without feature constraints get the x86-64 baseline. Since clang
+targets a more capable CPU on macOS by default, `@llvm//platforms:macos_x86_64`
+declares its additional features. macOS platforms with exactly these features
+get `-march=penryn`, which compiles exactly like clang's default for macOS,
+including its predefined CPU macros. The platforms in `@llvm//platforms` also
+reset the model, so that it doesn't carry over from another platform in a
+transition.
+
 ### C++ standard library selection
 
 Both libc++ and libstdc++ are supported. libc++ is selected by default.

@@ -63,6 +63,21 @@ _host_bool_flag = rule(
     },
 )
 
+def _x86_64_tune_cpu_flag_impl(ctx):
+    return [
+        BuildSettingInfo(value = ctx.build_setting_value),
+        platform_common.TemplateVariableInfo({"X86_64_TUNE_CPU": ctx.build_setting_value}),
+    ]
+
+_x86_64_tune_cpu_flag = rule(
+    implementation = _x86_64_tune_cpu_flag_impl,
+    build_setting = config.string(flag = True),
+    attrs = {
+        # Read by Bazel 9 and later to decide whether the value propagates to exec configurations.
+        "scope": attr.string(),
+    },
+)
+
 def _declare_sanitizer_config_setting(sanitizer):
     target_setting_name = "target_" + sanitizer
     target_feature_name = sanitizer + "_target_config"
@@ -157,6 +172,18 @@ def config_settings():
         flag_values = {
             ":preferred_libc": "musl",
         },
+    )
+
+    # The CPU to tune x86-64 code for, e.g. "znver4", as the X86_64_TUNE_CPU Make variable. If
+    # empty, code is tuned for the @platforms_contrib//cpu/x86_64:model of the target platform if
+    # it has one and for "generic" otherwise, as clang does without -mtune.
+    #
+    # TODO: Use scope = "platform" once Bazel supports it, so that a value set via the flags of a
+    # platform doesn't carry over to other platforms.
+    _x86_64_tune_cpu_flag(
+        name = "x86_64_tune_cpu",
+        build_setting_default = "",
+        scope = "target",
     )
 
     # This flag controls whether we compile and link with --sysroot=/dev/null

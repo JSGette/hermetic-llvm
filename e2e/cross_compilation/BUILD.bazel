@@ -82,6 +82,7 @@ platform(
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
     ] + glibc_version_constraints("2.35") + x86_64_level_constraints("v3"),
+    flags = ["--@llvm//config:x86_64_tune_cpu=znver4"],
 )
 
 platform(
