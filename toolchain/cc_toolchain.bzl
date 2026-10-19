@@ -107,6 +107,8 @@ def cc_toolchain(
             "@llvm//toolchain/features/header_modules:all_header_module_features",
             "@llvm//toolchain/features:external_include_paths",
             "@llvm//toolchain/features:generate_pdb_file",
+            "@llvm//toolchain/features:fdo_instrument",
+            "@llvm//toolchain/features:cs_fdo_instrument",
             "@llvm//toolchain/features:fdo_optimize",
             "@llvm//toolchain/features:skip_virtual_includes",
             "@rules_cc//cc/toolchains/args/thin_lto:feature",

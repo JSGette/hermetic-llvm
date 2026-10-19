@@ -1,4 +1,4 @@
-load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo", "bool_flag", "string_flag")
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo", "bool_flag", "bool_setting", "string_flag")
 
 OPTIMIZATION_MODES = [
     "debug",
@@ -71,6 +71,35 @@ _selected_sanitizer_bool_flag = rule(
     attrs = {
         "host_setting": attr.label(mandatory = True),
         "target_setting": attr.label(mandatory = True),
+    },
+)
+
+_FDO_INSTRUMENT = "//command_line_option:fdo_instrument"
+_CS_FDO_INSTRUMENT = "//command_line_option:cs_fdo_instrument"
+_FDO_INSTRUMENT_REQUESTED = "//config:fdo_instrument_requested"
+
+def _fdo_instrument_requested_transition_impl(settings, _attr):
+    requested = settings[_FDO_INSTRUMENT] or settings[_CS_FDO_INSTRUMENT]
+    return {_FDO_INSTRUMENT_REQUESTED: bool(requested)}
+
+_fdo_instrument_requested_transition = transition(
+    implementation = _fdo_instrument_requested_transition_impl,
+    inputs = [_FDO_INSTRUMENT, _CS_FDO_INSTRUMENT],
+    outputs = [_FDO_INSTRUMENT_REQUESTED],
+)
+
+def _fdo_instrument_flag_impl(ctx):
+    requested = ctx.attr._requested[0][BuildSettingInfo].value
+    return [config_common.FeatureFlagInfo(value = "true" if requested else "false")]
+
+_fdo_instrument_flag = rule(
+    doc = "\"true\" when --fdo_instrument or --cs_fdo_instrument is set, else \"false\".",
+    implementation = _fdo_instrument_flag_impl,
+    attrs = {
+        "_requested": attr.label(
+            default = _FDO_INSTRUMENT_REQUESTED,
+            cfg = _fdo_instrument_requested_transition,
+        ),
     },
 )
 
@@ -197,3 +226,26 @@ def config_settings():
             build_setting_default = False,
         )
         _declare_sanitizer_config_setting(sanitizer)
+
+    # This config setting matches when --fdo_instrument or --cs_fdo_instrument
+    # is set, so the profile runtime can be staged for the link.
+    #
+    # Both flags take an arbitrary path, which no config_setting can match.
+    # Instead, a transition on :fdo_instrument_target_config copies "either
+    # flag is set" into :fdo_instrument_requested, and
+    # :fdo_instrument_target_config reports it back as a feature flag.
+    bool_setting(
+        name = "fdo_instrument_requested",
+        build_setting_default = False,
+        visibility = ["//visibility:private"],
+    )
+    _fdo_instrument_flag(
+        name = "fdo_instrument_target_config",
+        visibility = ["//visibility:private"],
+    )
+    native.config_setting(
+        name = "fdo_instrument_enabled",
+        flag_values = {
+            ":fdo_instrument_target_config": "true",
+        },
+    )
