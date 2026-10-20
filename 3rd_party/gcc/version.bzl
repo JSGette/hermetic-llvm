@@ -283,7 +283,15 @@ GCC_PATCHES = {
 }
 
 def gcc_patches(version):
-    return GCC_PATCHES.get(version, [])
+    # Spell _Dir's complete namespace in both ABIs. Clang otherwise mangles
+    # the new-ABI definition as the old-ABI type (llvm/llvm-project#95154).
+    filesystem_patch = (
+        "9-17/libstdcxx-filesystem-dir-namespace.patch" if gcc_version_at_least_for(version, "9.0.0") else "8.x/libstdcxx-filesystem-dir-namespace.patch"
+    )
+    return GCC_PATCHES.get(version, []) + [
+        _libstdcxx_patch(filesystem_patch),
+        _libstdcxx_patch("libstdcxx-filesystem-ts-dir-namespace.patch"),
+    ]
 
 def gcc_version_at_least(version):
     return gcc_version_at_least_for(GCC_VERSION, version)

@@ -1,11 +1,68 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("//3rd_party/gcc:version.bzl", "GCC_VERSIONS", "gcc_repository_label", "gcc_target_suffix", "libstdcxx_constraint_value")
+load("//3rd_party/gcc:version.bzl", "GCC_VERSIONS", "gcc_repository_label", "gcc_target_suffix", "libstdcxx_constraint_value", "select_gcc_version_at_least")
 load("//constraints/libc:libc_versions.bzl", "default_libc")
 
 package(default_visibility = ["//visibility:public"])
+
+[
+    cc_library(
+        name = "filesystem_{}_abi{}".format(api, abi),
+        srcs = ["filesystem_test.cc"],
+        copts = [
+            "-std=c++17",
+            "-D_GLIBCXX_USE_CXX11_ABI={}".format(abi),
+            "-DFS_TEST_FUNCTION=filesystem_abi{}".format(abi),
+        ] + (["-DFS_TEST_EXPERIMENTAL"] if api == "ts" else []),
+        target_compatible_with = select({
+            "//constraints/cxxstdlib:libstdcxx": [],
+            "//conditions:default": ["@platforms//:incompatible"],
+        }) + [
+            "@platforms//os:linux",
+        ],
+    )
+    for api in [
+        "std",
+        "ts",
+    ]
+    for abi in [
+        0,
+        1,
+    ]
+]
+
+[
+    cc_test(
+        name = "filesystem_{}_test".format(api),
+        srcs = ["filesystem_test_main.cc"],
+        linkopts = ["-lstdc++fs"] if api == "ts" else select_gcc_version_at_least(
+            "9.0.0",
+            [],
+            ["-lstdc++fs"],
+        ),
+        linkstatic = False,
+        target_compatible_with = select({
+            "//constraints/cxxstdlib:libstdcxx": [],
+            "//conditions:default": ["@platforms//:incompatible"],
+        }) + [
+            "@platforms//os:linux",
+        ],
+        # GCC 8 and the TS use a static libstdc++fs archive. Pull in both ABI
+        # objects, old first, so duplicate _Dir definitions cannot hide.
+        deps = [":filesystem_{}_abi{}".format(api, abi) for abi in [
+            0,
+            1,
+        ]],
+    )
+    for api in [
+        "std",
+        "ts",
+    ]
+]
 
 sh_test(
     name = "shared_elf_test",

@@ -1,0 +1,7 @@
+diff --git a/libstdc++-v3/src/c++17/fs_dir.cc b/libstdc++-v3/src/c++17/fs_dir.cc
+--- a/libstdc++-v3/src/c++17/fs_dir.cc
++++ b/libstdc++-v3/src/c++17/fs_dir.cc
+@@ -43,2 +43,2 @@
+-struct fs::_Dir : _Dir_base
++struct fs::_GLIBCXX_NAMESPACE_CXX11 _Dir : _Dir_base
+ {
