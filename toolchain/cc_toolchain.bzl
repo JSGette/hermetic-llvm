@@ -141,6 +141,7 @@ def cc_toolchain(
         all_of = select({
             "@platforms//os:linux": [
                 "@llvm//toolchain/features/interface_libraries:feature",
+                "@llvm//toolchain/features:linux_dynamic_linker",
                 "@llvm//toolchain/features:static_link_cpp_runtimes",
                 "@llvm//toolchain/features/runtime_library_search_directories:feature",
             ],

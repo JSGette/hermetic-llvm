@@ -1490,6 +1490,45 @@ cc_library(
     hdrs = ["coverage_lib.h"],
 )
 
+# These tests inspect cc_library outputs without executing the target code,
+# so either Linux execution architecture can check both target architectures.
+[
+    platform_transition_filegroup(
+        name = "coverage_lib_{}_{}".format(arch, libc),
+        srcs = [":coverage_lib"],
+        target_platform = "@llvm//platforms:linux_{}{}".format(arch, suffix),
+    )
+    for arch in [
+        "x86_64",
+        "aarch64",
+    ]
+    for libc, suffix in [
+        ("glibc", ""),
+        ("musl", "_musl"),
+    ]
+]
+
+[
+    sh_test(
+        name = "cc_library_{}_{}_outputs_test".format(arch, libc),
+        srcs = ["cc_library_outputs_test.sh"],
+        data = [":coverage_lib_{}_{}".format(arch, libc)],
+        env = {
+            "EXPECT_SHARED": expect_shared,
+            "LIBRARY_OUTPUTS": "$(rootpaths :coverage_lib_{}_{})".format(arch, libc),
+        },
+        target_compatible_with = ["@platforms//os:linux"],
+    )
+    for arch in [
+        "x86_64",
+        "aarch64",
+    ]
+    for libc, expect_shared in [
+        ("glibc", "yes"),
+        ("musl", "no"),
+    ]
+]
+
 cc_test(
     name = "coverage_lib_test",
     srcs = ["coverage_lib_test.cc"],

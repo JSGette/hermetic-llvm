@@ -49,6 +49,20 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features:static_link_cpp_runtimes",
 )
 
+# Bazel requires this feature to create shared cc_library outputs.
+cc_feature(
+    name = "supports_dynamic_linker",
+    feature_name = "supports_dynamic_linker",
+)
+
+cc_feature_set(
+    name = "linux_dynamic_linker",
+    all_of = select({
+        "//platforms/config:gnu": [":supports_dynamic_linker"],
+        "//conditions:default": [],
+    }),
+)
+
 cc_args(
     name = "no_exceptions_args",
     # Preserve the generic Clang behavior previously provided by --copt,
