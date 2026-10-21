@@ -807,6 +807,15 @@ cc_args(
     ],
 )
 
+# Profiling arguments are collected here; their callers still choose when to
+# apply them. The custom profile/host_profile settings (including the LLVM
+# bootstrap) select frontend instrumentation. Native Bazel FDO features select
+# IR or context-sensitive IR instrumentation. Coverage selects frontend counters
+# with coverage mapping. Profile use is independent of how counters were collected.
+# These declarations do not choose a mode; the existing callers do.
+
+# Custom //config:profile and //config:host_profile, via :profile_flags below.
+# Runtime construction also uses the compile half on its own.
 cc_args(
     name = "profile_compiler_flags",
     actions = [
@@ -841,6 +850,81 @@ cc_args(
     }),
 )
 
+# Native --fdo_instrument: rules_cc enables the fdo_instrument feature and
+# supplies its output directory through fdo_instrument_path.
+cc_args(
+    name = "fdo_instrument_args",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-fprofile-generate={fdo_instrument_path}",
+    ],
+    format = {
+        "fdo_instrument_path": "@rules_cc//cc/toolchains/variables:fdo_instrument_path",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:fdo_instrument_path",
+)
+
+# Native --cs_fdo_instrument: late IR instrumentation, including ThinLTO
+# backends. Its output directory is supplied by rules_cc as a separate variable.
+cc_args(
+    name = "cs_fdo_instrument_args",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-fcs-profile-generate={cs_fdo_instrument_path}",
+    ],
+    format = {
+        "cs_fdo_instrument_path": "@rules_cc//cc/toolchains/variables:cs_fdo_instrument_path",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:cs_fdo_instrument_path",
+)
+
+# The fdo_optimize feature consumes the profile selected by --fdo_profile or
+# --fdo_optimize. The LLVM bootstrap already uses this path for its merged data.
+cc_args(
+    name = "fdo_optimize_compile_args",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-fprofile-use={fdo_profile_path}",
+        "-Wno-profile-instr-unprofiled",
+        "-Wno-profile-instr-out-of-date",
+    ],
+    format = {
+        "fdo_profile_path": "@rules_cc//cc/toolchains/variables:fdo_profile_path",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:fdo_profile_path",
+)
+
+# Bazel coverage selects llvm_coverage_map_format, independently of the custom
+# profile settings and native FDO generation options.
+cc_args(
+    name = "llvm_coverage_map_format_compile_args",
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = [
+        "-fprofile-instr-generate",
+        "-fcoverage-mapping",
+    ],
+)
+
+cc_args(
+    name = "llvm_coverage_map_format_link_args",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = ["-fprofile-instr-generate"] + select({
+        "@platforms//os:windows": [
+            "-Wl,-u,__llvm_profile_runtime",
+            "-Wl,/include:__llvm_profile_runtime",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
 cc_args_list(
     name = "fuzzer_flags",
     args = select({
@@ -855,6 +939,8 @@ cc_args_list(
 
 cc_args_list(
     name = "profile_flags",
+    # profile_enabled selects profile for target configurations and host_profile
+    # for exec configurations; native FDO options are handled by their features.
     args = select({
         "//config:profile_enabled": [
             ":profile_compiler_flags",
