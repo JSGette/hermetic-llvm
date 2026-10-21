@@ -88,13 +88,13 @@ _fdo_instrument_requested_transition = transition(
     outputs = [_FDO_INSTRUMENT_REQUESTED],
 )
 
-def _fdo_instrument_flag_impl(ctx):
+def _fdo_instrument_requested_config_impl(ctx):
     requested = ctx.attr._requested[0][BuildSettingInfo].value
     return [config_common.FeatureFlagInfo(value = "true" if requested else "false")]
 
-_fdo_instrument_flag = rule(
+_fdo_instrument_requested_config = rule(
     doc = "\"true\" when --fdo_instrument or --cs_fdo_instrument is set, else \"false\".",
-    implementation = _fdo_instrument_flag_impl,
+    implementation = _fdo_instrument_requested_config_impl,
     attrs = {
         "_requested": attr.label(
             default = _FDO_INSTRUMENT_REQUESTED,
@@ -231,21 +231,21 @@ def config_settings():
     # is set, so the profile runtime can be staged for the link.
     #
     # Both flags take an arbitrary path, which no config_setting can match.
-    # Instead, a transition on :fdo_instrument_target_config copies "either
+    # Instead, a transition on :fdo_instrument_requested_config copies "either
     # flag is set" into :fdo_instrument_requested, and
-    # :fdo_instrument_target_config reports it back as a feature flag.
+    # :fdo_instrument_requested_config reports it back as a feature flag.
     bool_setting(
         name = "fdo_instrument_requested",
         build_setting_default = False,
         visibility = ["//visibility:private"],
     )
-    _fdo_instrument_flag(
-        name = "fdo_instrument_target_config",
+    _fdo_instrument_requested_config(
+        name = "fdo_instrument_requested_config",
         visibility = ["//visibility:private"],
     )
     native.config_setting(
         name = "fdo_instrument_enabled",
         flag_values = {
-            ":fdo_instrument_target_config": "true",
+            ":fdo_instrument_requested_config": "true",
         },
     )
