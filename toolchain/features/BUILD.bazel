@@ -563,17 +563,6 @@ cc_feature(
     requires_any_of = [":coverage_stub"],
 )
 
-# Preserve the existing public argument labels after relocating their definitions.
-alias(
-    name = "llvm_coverage_map_format_compile_args",
-    actual = "//toolchain/args:llvm_coverage_map_format_compile_args",
-)
-
-alias(
-    name = "llvm_coverage_map_format_link_args",
-    actual = "//toolchain/args:llvm_coverage_map_format_link_args",
-)
-
 cc_feature(
     name = "gcc_coverage_map_format",
     args = [
@@ -620,11 +609,6 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features/legacy:fdo_instrument",
 )
 
-alias(
-    name = "fdo_instrument_args",
-    actual = "//toolchain/args:fdo_instrument_args",
-)
-
 cc_feature(
     name = "cs_fdo_instrument",
     args = [
@@ -634,20 +618,10 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features/legacy:cs_fdo_instrument",
 )
 
-alias(
-    name = "cs_fdo_instrument_args",
-    actual = "//toolchain/args:cs_fdo_instrument_args",
-)
-
 cc_feature(
     name = "fdo_optimize",
     args = ["//toolchain/args:fdo_optimize_compile_args"],
     overrides = "@rules_cc//cc/toolchains/features/legacy:fdo_optimize",
-)
-
-alias(
-    name = "fdo_optimize_compile_args",
-    actual = "//toolchain/args:fdo_optimize_compile_args",
 )
 
 cc_args(
