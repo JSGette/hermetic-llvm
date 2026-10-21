@@ -1,4 +1,4 @@
-load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo", "bool_flag", "string_flag")
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo", "bool_flag", "bool_setting", "string_flag")
 
 OPTIMIZATION_MODES = [
     "debug",
@@ -71,6 +71,31 @@ _selected_sanitizer_bool_flag = rule(
     attrs = {
         "host_setting": attr.label(mandatory = True),
         "target_setting": attr.label(mandatory = True),
+    },
+)
+
+def _bazel_fdo_instrument_requested_transition_impl(settings, _attr):
+    requested = settings["//command_line_option:fdo_instrument"] or settings["//command_line_option:cs_fdo_instrument"]
+    return {"//config:bazel_fdo_instrument_requested": bool(requested)}
+
+_bazel_fdo_instrument_requested_transition = transition(
+    implementation = _bazel_fdo_instrument_requested_transition_impl,
+    inputs = ["//command_line_option:fdo_instrument", "//command_line_option:cs_fdo_instrument"],
+    outputs = ["//config:bazel_fdo_instrument_requested"],
+)
+
+def _bazel_fdo_instrument_requested_config_impl(ctx):
+    requested = ctx.attr._requested[0][BuildSettingInfo].value
+    return [config_common.FeatureFlagInfo(value = "true" if requested else "false")]
+
+_bazel_fdo_instrument_requested_config = rule(
+    doc = "\"true\" when --fdo_instrument or --cs_fdo_instrument is set, else \"false\".",
+    implementation = _bazel_fdo_instrument_requested_config_impl,
+    attrs = {
+        "_requested": attr.label(
+            default = "//config:bazel_fdo_instrument_requested",
+            cfg = _bazel_fdo_instrument_requested_transition,
+        ),
     },
 )
 
@@ -197,3 +222,26 @@ def config_settings():
             build_setting_default = False,
         )
         _declare_sanitizer_config_setting(sanitizer)
+
+    # This config setting matches when --fdo_instrument or --cs_fdo_instrument
+    # is set, so the profile runtime can be staged for the link.
+    #
+    # Both flags take an arbitrary path, which no config_setting can match.
+    # Instead, a transition on :bazel_fdo_instrument_requested_config copies "either
+    # flag is set" into :bazel_fdo_instrument_requested, and
+    # :bazel_fdo_instrument_requested_config reports it back as a feature flag.
+    bool_setting(
+        name = "bazel_fdo_instrument_requested",
+        build_setting_default = False,
+        visibility = ["//visibility:private"],
+    )
+    _bazel_fdo_instrument_requested_config(
+        name = "bazel_fdo_instrument_requested_config",
+        visibility = ["//visibility:private"],
+    )
+    native.config_setting(
+        name = "bazel_fdo_instrument_enabled",
+        flag_values = {
+            ":bazel_fdo_instrument_requested_config": "true",
+        },
+    )

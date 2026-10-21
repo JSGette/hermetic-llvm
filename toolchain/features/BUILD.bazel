@@ -556,32 +556,11 @@ cc_feature(
 cc_feature(
     name = "llvm_coverage_map_format",
     args = [
-        ":llvm_coverage_map_format_compile_args",
-        ":llvm_coverage_map_format_link_args",
+        "//toolchain/args:llvm_coverage_map_format_compile_args",
+        "//toolchain/args:llvm_coverage_map_format_link_args",
     ],
     overrides = "@rules_cc//cc/toolchains/features/legacy:llvm_coverage_map_format",
     requires_any_of = [":coverage_stub"],
-)
-
-cc_args(
-    name = "llvm_coverage_map_format_compile_args",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
-    args = [
-        "-fprofile-instr-generate",
-        "-fcoverage-mapping",
-    ],
-)
-
-cc_args(
-    name = "llvm_coverage_map_format_link_args",
-    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
-    args = ["-fprofile-instr-generate"] + select({
-        "@platforms//os:windows": [
-            "-Wl,-u,__llvm_profile_runtime",
-            "-Wl,/include:__llvm_profile_runtime",
-        ],
-        "//conditions:default": [],
-    }),
 )
 
 cc_feature(
@@ -622,25 +601,27 @@ cc_args(
 )
 
 cc_feature(
-    name = "fdo_optimize",
-    args = [":fdo_optimize_compile_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:fdo_optimize",
+    name = "fdo_instrument",
+    args = [
+        "//toolchain/args:fdo_instrument_args",
+        "//toolchain/args:profile_runtime_windows_linker_flags",
+    ],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:fdo_instrument",
 )
 
-cc_args(
-    name = "fdo_optimize_compile_args",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-    ],
+cc_feature(
+    name = "cs_fdo_instrument",
     args = [
-        "-fprofile-use={fdo_profile_path}",
-        "-Wno-profile-instr-unprofiled",
-        "-Wno-profile-instr-out-of-date",
+        "//toolchain/args:cs_fdo_instrument_args",
+        "//toolchain/args:profile_runtime_windows_linker_flags",
     ],
-    format = {
-        "fdo_profile_path": "@rules_cc//cc/toolchains/variables:fdo_profile_path",
-    },
-    requires_not_none = "@rules_cc//cc/toolchains/variables:fdo_profile_path",
+    overrides = "@rules_cc//cc/toolchains/features/legacy:cs_fdo_instrument",
+)
+
+cc_feature(
+    name = "fdo_optimize",
+    args = ["//toolchain/args:fdo_optimize_compile_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:fdo_optimize",
 )
 
 cc_args(

@@ -17,9 +17,11 @@ load(
     "asan_cc_binary",
     "asan_cc_test",
     "cfi_cc_binary",
+    "cs_fdo_instrument_cc_binary",
     "dfsan_cc_binary",
     "external_include_paths_glibc_alias",
     "external_include_paths_glibc_headers_test",
+    "fdo_instrument_cc_binary",
     "fission_cc_binary",
     "fuzzer_asan_cc_binary",
     "fuzzer_cc_binary",
@@ -1459,6 +1461,64 @@ exec_test(
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "@platforms//os:macos": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+fdo_instrument_cc_binary(
+    name = "fdo_instrument_main",
+    srcs = ["profile_main.cc"],
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "@platforms//os:macos": [],
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+sh_test(
+    name = "fdo_instrument_output_test",
+    srcs = ["profile_output_test.sh"],
+    data = [":fdo_instrument_main"],
+    env = {
+        "BINARY": "$(rootpath :fdo_instrument_main)",
+    },
+    env_inherit = ["PATH"],
+    exec_compatible_with = HOST_CONSTRAINTS,
+    tags = ["no-remote"],
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "@platforms//os:macos": [],
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+cs_fdo_instrument_cc_binary(
+    name = "cs_fdo_instrument_main",
+    srcs = ["profile_main.cc"],
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "@platforms//os:macos": [],
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+sh_test(
+    name = "cs_fdo_instrument_output_test",
+    srcs = ["profile_output_test.sh"],
+    data = [":cs_fdo_instrument_main"],
+    env = {
+        "BINARY": "$(rootpath :cs_fdo_instrument_main)",
+    },
+    env_inherit = ["PATH"],
+    exec_compatible_with = HOST_CONSTRAINTS,
+    tags = ["no-remote"],
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "@platforms//os:macos": [],
+        "@platforms//os:windows": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
