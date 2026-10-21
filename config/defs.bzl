@@ -74,27 +74,27 @@ _selected_sanitizer_bool_flag = rule(
     },
 )
 
-def _fdo_instrument_requested_transition_impl(settings, _attr):
+def _bazel_fdo_instrument_requested_transition_impl(settings, _attr):
     requested = settings["//command_line_option:fdo_instrument"] or settings["//command_line_option:cs_fdo_instrument"]
-    return {"//config:fdo_instrument_requested": bool(requested)}
+    return {"//config:bazel_fdo_instrument_requested": bool(requested)}
 
-_fdo_instrument_requested_transition = transition(
-    implementation = _fdo_instrument_requested_transition_impl,
+_bazel_fdo_instrument_requested_transition = transition(
+    implementation = _bazel_fdo_instrument_requested_transition_impl,
     inputs = ["//command_line_option:fdo_instrument", "//command_line_option:cs_fdo_instrument"],
-    outputs = ["//config:fdo_instrument_requested"],
+    outputs = ["//config:bazel_fdo_instrument_requested"],
 )
 
-def _fdo_instrument_requested_config_impl(ctx):
+def _bazel_fdo_instrument_requested_config_impl(ctx):
     requested = ctx.attr._requested[0][BuildSettingInfo].value
     return [config_common.FeatureFlagInfo(value = "true" if requested else "false")]
 
-_fdo_instrument_requested_config = rule(
+_bazel_fdo_instrument_requested_config = rule(
     doc = "\"true\" when --fdo_instrument or --cs_fdo_instrument is set, else \"false\".",
-    implementation = _fdo_instrument_requested_config_impl,
+    implementation = _bazel_fdo_instrument_requested_config_impl,
     attrs = {
         "_requested": attr.label(
-            default = "//config:fdo_instrument_requested",
-            cfg = _fdo_instrument_requested_transition,
+            default = "//config:bazel_fdo_instrument_requested",
+            cfg = _bazel_fdo_instrument_requested_transition,
         ),
     },
 )
@@ -227,21 +227,21 @@ def config_settings():
     # is set, so the profile runtime can be staged for the link.
     #
     # Both flags take an arbitrary path, which no config_setting can match.
-    # Instead, a transition on :fdo_instrument_requested_config copies "either
-    # flag is set" into :fdo_instrument_requested, and
-    # :fdo_instrument_requested_config reports it back as a feature flag.
+    # Instead, a transition on :bazel_fdo_instrument_requested_config copies "either
+    # flag is set" into :bazel_fdo_instrument_requested, and
+    # :bazel_fdo_instrument_requested_config reports it back as a feature flag.
     bool_setting(
-        name = "fdo_instrument_requested",
+        name = "bazel_fdo_instrument_requested",
         build_setting_default = False,
         visibility = ["//visibility:private"],
     )
-    _fdo_instrument_requested_config(
-        name = "fdo_instrument_requested_config",
+    _bazel_fdo_instrument_requested_config(
+        name = "bazel_fdo_instrument_requested_config",
         visibility = ["//visibility:private"],
     )
     native.config_setting(
-        name = "fdo_instrument_enabled",
+        name = "bazel_fdo_instrument_enabled",
         flag_values = {
-            ":fdo_instrument_requested_config": "true",
+            ":bazel_fdo_instrument_requested_config": "true",
         },
     )
