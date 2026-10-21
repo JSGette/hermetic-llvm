@@ -74,18 +74,14 @@ _selected_sanitizer_bool_flag = rule(
     },
 )
 
-_FDO_INSTRUMENT = "//command_line_option:fdo_instrument"
-_CS_FDO_INSTRUMENT = "//command_line_option:cs_fdo_instrument"
-_FDO_INSTRUMENT_REQUESTED = "//config:fdo_instrument_requested"
-
 def _fdo_instrument_requested_transition_impl(settings, _attr):
-    requested = settings[_FDO_INSTRUMENT] or settings[_CS_FDO_INSTRUMENT]
-    return {_FDO_INSTRUMENT_REQUESTED: bool(requested)}
+    requested = settings["//command_line_option:fdo_instrument"] or settings["//command_line_option:cs_fdo_instrument"]
+    return {"//config:fdo_instrument_requested": bool(requested)}
 
 _fdo_instrument_requested_transition = transition(
     implementation = _fdo_instrument_requested_transition_impl,
-    inputs = [_FDO_INSTRUMENT, _CS_FDO_INSTRUMENT],
-    outputs = [_FDO_INSTRUMENT_REQUESTED],
+    inputs = ["//command_line_option:fdo_instrument", "//command_line_option:cs_fdo_instrument"],
+    outputs = ["//config:fdo_instrument_requested"],
 )
 
 def _fdo_instrument_requested_config_impl(ctx):
@@ -97,7 +93,7 @@ _fdo_instrument_requested_config = rule(
     implementation = _fdo_instrument_requested_config_impl,
     attrs = {
         "_requested": attr.label(
-            default = _FDO_INSTRUMENT_REQUESTED,
+            default = "//config:fdo_instrument_requested",
             cfg = _fdo_instrument_requested_transition,
         ),
     },
