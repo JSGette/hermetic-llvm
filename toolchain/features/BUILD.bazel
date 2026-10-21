@@ -6,6 +6,13 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//visibility:public"])
 
+# GNU-driver response-file syntax is independent of target OS and runtime stage.
+# clang-cl's separate protocol composition selects Windows quoting instead.
+cc_feature(
+    name = "gcc_quoting_for_param_files",
+    feature_name = "gcc_quoting_for_param_files",
+)
+
 _DEBUG_INFO_COMPILE_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:c_compile",
     "@rules_cc//cc/toolchains/actions:cpp_compile",

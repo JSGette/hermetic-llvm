@@ -578,6 +578,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             # See https://github.com/bazelbuild/rules_cc/issues/299#issuecomment-2660340534
             cc_toolchain(
                 name = cc_toolchain_name,
+                supports_gnu_param_file_quoting = exec_os in ["linux", "macos"],
                 extra_args = select({
                     "@platforms//os:uefi": [],
                     "//conditions:default": [cc_toolchain_name + "_resource_directory_args"],

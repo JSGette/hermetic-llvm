@@ -7,8 +7,15 @@ def cc_toolchain(
         name,
         tool_map,
         module_map = None,
-        extra_args = None):
+        extra_args = None,
+        supports_gnu_param_file_quoting = False):
     extra_args = extra_args or []
+
+    # Link and archive response files share a quoting feature. Enable the GNU
+    # protocol only when the execution tool map's archiver also accepts it.
+    gnu_quoting_features = [
+        "@llvm//toolchain/features:gcc_quoting_for_param_files",
+    ] if supports_gnu_param_file_quoting else []
     cc_feature_set(
         name = name + "_msvc_known_features",
         all_of = [
@@ -203,7 +210,7 @@ def cc_toolchain(
 
     cc_feature_set(
         name = name + "_generic_selected_known_features",
-        all_of = select({
+        all_of = gnu_quoting_features + select({
             "@llvm//toolchain:runtimes_none": [
                 "@llvm//toolchain/features:external_include_paths",
                 "@llvm//toolchain/features:fdo_optimize",
@@ -225,7 +232,7 @@ def cc_toolchain(
 
     cc_feature_set(
         name = name + "_generic_selected_enabled_features",
-        all_of = select({
+        all_of = gnu_quoting_features + select({
             "@llvm//toolchain:runtimes_none": [name + "_generic_runtimes_only_enabled_features"],
             "@llvm//toolchain:runtimes_stage1": [name + "_generic_runtimes_only_enabled_features"],
             "@llvm//toolchain:runtimes_stage1_hosted": [name + "_generic_runtimes_only_enabled_features"],

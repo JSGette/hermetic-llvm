@@ -35,6 +35,8 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
             name = cc_toolchain_name,
             tool_map = platform_cc_tool_map(exec_os, exec_cpu),
             module_map = platform_module_map(exec_os, exec_cpu),
+            # llvm-ar's default response-file parser follows the execution OS.
+            supports_gnu_param_file_quoting = exec_os in ["linux", "macos"],
             # Paths below describe the concrete execution filesystem. Keep
             # target semantics in //toolchain's ordered argument composition.
             extra_args = select({
