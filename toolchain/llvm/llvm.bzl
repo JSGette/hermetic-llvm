@@ -149,7 +149,7 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:lto_backend": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:preprocess_assemble": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":clang-cl",
-        "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
+        "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-lib",
         "@rules_cc//cc/toolchains/actions:cpp_link_executable": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_link_nodeps_dynamic_library": ":clang-cl",
@@ -381,6 +381,13 @@ def declare_llvm_targets(*, suffix = ""):
     cc_tool(
         name = "llvm-ar",
         src = "bin/llvm-ar" + suffix,
+    )
+
+    cc_tool(
+        name = "llvm-lib",
+        src = "bin/llvm-lib" + suffix,
+        # Input lookup must not fall back to ambient Visual Studio libraries.
+        env = {"LIB": "__hermetic_llvm_empty_lib__"},
     )
 
     cc_tool(
