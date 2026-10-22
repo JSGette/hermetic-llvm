@@ -335,6 +335,7 @@ def cc_toolchain(
             ],
             "@platforms//os:windows": [
                 "@llvm//toolchain:windows_executable_pattern",
+                "@llvm//toolchain:windows_mingw_dynamic_library_pattern",
             ],
             "//conditions:default": [],
         }),
