@@ -6,6 +6,7 @@ package(default_visibility = ["//visibility:public"])
 
 _MSVC_DYNAMIC_RUNTIME_LIBRARIES = [
     "iso_stdio_wide_specifiers.lib",
+    "legacy_stdio_definitions.lib",
     "msvcprt.lib",
     "msvcrt.lib",
     "oldnames.lib",
@@ -14,6 +15,7 @@ _MSVC_DYNAMIC_RUNTIME_LIBRARIES = [
 
 _MSVC_STATIC_RUNTIME_LIBRARIES = [
     "iso_stdio_wide_specifiers.lib",
+    "legacy_stdio_definitions.lib",
     "libcmt.lib",
     "libcpmt.lib",
     "libvcruntime.lib",
