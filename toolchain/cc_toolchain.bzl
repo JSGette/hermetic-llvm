@@ -174,6 +174,7 @@ def cc_toolchain(
             "@platforms//os:uefi": [],
             "@platforms//os:none": [],
         }) + [
+            "@llvm//toolchain/features:hosted_dynamic_linker",
             "@llvm//toolchain/features:prefer_pic_for_opt_binaries",
             "@llvm//toolchain/features:sanitize_pwd",
             "@rules_cc//cc/toolchains/args/layering_check:module_maps",

@@ -1644,6 +1644,105 @@ cc_library(
     hdrs = ["coverage_lib.h"],
 )
 
+cc_library(
+    name = "shared_library_probe",
+    srcs = ["shared_library_probe.c"],
+    hdrs = ["shared_library_probe.h"],
+    local_defines = ["SHARED_LIBRARY_BUILD"],
+)
+
+filegroup(
+    name = "shared_library_dynamic_outputs",
+    srcs = ["shared_library_probe"],
+    output_group = "dynamic_library",
+)
+
+filegroup(
+    name = "shared_library_outputs",
+    # Windows cc_library default outputs omit DLLs; use the native output group.
+    srcs = ["shared_library_probe"] + select({
+        "@platforms//os:windows": ["shared_library_dynamic_outputs"],
+        "//conditions:default": [],
+    }),
+)
+
+# Inspect real link artifacts without executing foreign target code. Musl is
+# omitted until its shared libc and loader are wired into the consumer path;
+# archive-only output is an implementation gap, not a permanent musl contract.
+# MSVC retains its existing support and separately opted-in CI coverage.
+_SHARED_LIBRARY_PLATFORMS = [
+    "{}_{}".format(os, arch)
+    for os in [
+        "linux",
+        "macos",
+        "windows",
+    ]
+    for arch in [
+        "x86_64",
+        "aarch64",
+    ]
+]
+
+[
+    platform_transition_filegroup(
+        name = "shared_library_outputs_" + platform,
+        srcs = ["shared_library_outputs"],
+        target_platform = "@llvm//platforms:" + platform,
+    )
+    for platform in _SHARED_LIBRARY_PLATFORMS
+]
+
+[
+    sh_test(
+        name = "cc_library_{}_outputs_test".format(platform),
+        srcs = ["cc_library_outputs_test.sh"],
+        data = ["shared_library_outputs_" + platform],
+        env = {
+            "EXPECT_SHARED": "no" if platform.startswith("macos_") and not bazel_features.cc.supports_starlarkified_toolchains else "yes",
+            "LIBRARY_OUTPUTS": "$(rootpaths :shared_library_outputs_{})".format(platform),
+        },
+        target_compatible_with = ["@platforms//os:linux"],
+    )
+    for platform in _SHARED_LIBRARY_PLATFORMS
+]
+
+cc_test(
+    name = "shared_library_consumer_test",
+    srcs = ["shared_library_consumer.c"],
+    exec_properties = select({
+        "@platforms//os:windows": {"test.no-remote": "1"},
+        "//conditions:default": {},
+    }),
+    linkstatic = False,
+    target_compatible_with = select({
+        "@llvm//platforms/config:musl": ["@platforms//:incompatible"],
+        "@platforms//os:macos": [] if bazel_features.cc.supports_starlarkified_toolchains else ["@platforms//:incompatible"],
+        "@platforms//os:uefi": ["@platforms//:incompatible"],
+        "@platforms//os:none": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+    deps = ["shared_library_probe"],
+)
+
+cc_library(
+    name = "static_library_probe",
+    srcs = ["shared_library_probe.c"],
+    hdrs = ["shared_library_probe.h"],
+    linkstatic = True,
+    local_defines = ["SHARED_LIBRARY_BUILD"],
+)
+
+sh_test(
+    name = "cc_library_linkstatic_outputs_test",
+    srcs = ["cc_library_outputs_test.sh"],
+    data = ["static_library_probe"],
+    env = {
+        "EXPECT_SHARED": "no",
+        "LIBRARY_OUTPUTS": "$(rootpaths :static_library_probe)",
+    },
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
 cc_test(
     name = "coverage_lib_test",
     srcs = ["coverage_lib_test.cc"],
