@@ -1,6 +1,6 @@
 load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("//constraints/libc:libc_versions.bzl", "GLIBC_VERSIONS")
+load("//constraints/libc:libc_versions.bzl", "GLIBC_VERSIONS", "libc_supports_target")
 load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS")
 
 # glibc's source/header triples do not always match our (os, arch) names.
@@ -31,6 +31,13 @@ GLIBC_RELEASE_COMMITS = {
     "2.40": "8d3dd23e3de8b4c6e4b94f8bbfab971c3b8a55be",  # release/2.40/master
     "2.41": "5cf17ebc659c875aff3c49d2a59ce15f46167389",  # release/2.41/master
     "2.42": "8aaf4b732d7650c2db3beb4dc8bb70eab5b022c3",  # release/2.42/master
+}
+
+# crt1.o and libc_nonshared.a built from 2.28 sources only reference symbols
+# that older releases already export, so older versions reuse those sources.
+_GLIBC_SOURCE_VERSIONS = {
+    "2.17": "2.28",
+    "2.23": "2.28",
 }
 
 GLIBC_RELEASE_URLS = {
@@ -101,15 +108,19 @@ def _glibc_impl(module_ctx):
             index = json.decode(file_content, default = None)
 
     for version in GLIBC_VERSIONS:
+        source_version = _GLIBC_SOURCE_VERSIONS.get(version, version)
         for (target_os, target_arch) in LIBC_SUPPORTED_TARGETS:
+            if not libc_supports_target("gnu." + version, target_os, target_arch):
+                continue
+
             target = glibc_triple(target_os, target_arch)
 
             #TODO(cerisier): Share the repository between targets
             http_archive(
                 name = "glibc_%s.%s" % (target, version),
-                urls = _glibc_release_urls(version),
-                strip_prefix = _glibc_release_strip_prefix(version),
-                sha256 = GLIBC_RELEASE_INTEGRITY[version],
+                urls = _glibc_release_urls(source_version),
+                strip_prefix = _glibc_release_strip_prefix(source_version),
+                sha256 = GLIBC_RELEASE_INTEGRITY[source_version],
                 build_file = "//3rd_party/libc/glibc:glibc.BUILD.bazel",
                 patches = [
                     # This file is generated when compiling the glibc.

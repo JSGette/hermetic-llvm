@@ -167,3 +167,46 @@ exec_test(
         ":llvm-readelf",
     ],
 )
+
+cc_binary(
+    name = "hello_cxx",
+    srcs = ["main.cc"],
+)
+
+platform_transition_binary(
+    name = "hello_cxx_x86_64_gnu.2.17",
+    binary = ":hello_cxx",
+    target_platform = "@llvm//platforms:linux_x86_64_gnu.2.17",
+)
+
+platform_transition_binary(
+    name = "hello_cxx_aarch64_gnu.2.23",
+    binary = ":hello_cxx",
+    target_platform = "@llvm//platforms:linux_aarch64_gnu.2.23",
+)
+
+[
+    exec_test(
+        sh_test,
+        name = "{}_glibc_{}_floor_test".format(
+            cpu,
+            version.replace(".", "_"),
+        ),
+        srcs = ["verify_glibc_floor.sh"],
+        args = [
+            "$(rootpath :llvm-readelf)",
+            "$(rootpath :hello_cxx_{}_gnu.{})".format(cpu, version),
+            version,
+        ],
+        data = [
+            ":hello_cxx_{}_gnu.{}".format(cpu, version),
+        ],
+        tools = [
+            ":llvm-readelf",
+        ],
+    )
+    for (cpu, version) in [
+        ("x86_64", "2.17"),
+        ("aarch64", "2.23"),
+    ]
+]

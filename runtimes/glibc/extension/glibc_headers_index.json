@@ -1892,5 +1892,17 @@
             "url": "https://github.com/cerisier/glibc-headers/releases/download/2.28-20250512/x86_64-linux-gnux32.2.28.tar.zst",
             "sha256": "fa1851c047d194a5cd72316e358809fc3d5b5559a628d0d25b926353cc506cc3"
         }
+    },
+    "2.23": {
+        "aarch64-linux-gnu": {
+            "url": "https://github.com/JSGette/glibc-headers/releases/download/2.23-20261022/aarch64-linux-gnu.2.23.tar.zst",
+            "sha256": "138f63156208657e3dd9681811a946a120726da09ea01069770fc16b69fe4f25"
+        }
+    },
+    "2.17": {
+        "x86_64-linux-gnu": {
+            "url": "https://github.com/JSGette/glibc-headers/releases/download/2.17-20261022/x86_64-linux-gnu.2.17.tar.zst",
+            "sha256": "4a0f30378bcc9646acbfa4bfd1470e1d26f745afe058e419065c3270c48abd92"
+        }
     }
 }

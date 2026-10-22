@@ -1,6 +1,6 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
-load("@llvm//constraints/libc:libc_versions.bzl", "LIBCS")
+load("@llvm//constraints/libc:libc_versions.bzl", "LIBCS", "libc_supports_target")
 load("@llvm//platforms/distros/linux:constraints.bzl", "UBUNTU_20_04_CONSTRAINTS")
 load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
@@ -86,17 +86,15 @@ PLATFORMS = [
     "@llvm//platforms:windows_x86_64_msvc",
     "@llvm//platforms:windows_aarch64_msvc",
 ] + [
-    "@llvm//platforms:linux_x86_64_{}".format(libc)
+    "@llvm//platforms:linux_{}_{}".format(cpu, libc)
+    for cpu in [
+        "x86_64",
+        "aarch64",
+        "s390x",
+        "armv7",
+    ]
     for libc in LIBCS
-] + [
-    "@llvm//platforms:linux_aarch64_{}".format(libc)
-    for libc in LIBCS
-] + [
-    "@llvm//platforms:linux_s390x_{}".format(libc)
-    for libc in LIBCS
-] + [
-    "@llvm//platforms:linux_armv7_{}".format(libc)
-    for libc in LIBCS
+    if libc_supports_target(libc, "linux", cpu)
 ] + [
     # RISC-V needs special LIBC treatment because of the kernel-glibc association we do.
     # Builtins requires kernel headers >= 5.10 which we hardcode to be 2.33+

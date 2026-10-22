@@ -1,4 +1,4 @@
-load("//constraints/libc:libc_versions.bzl", "DEFAULT_LIBC", "GLIBCS")
+load("//constraints/libc:libc_versions.bzl", "DEFAULT_LIBC", "GLIBCS", "libc_supports_target")
 load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS")
 load(":glibc.bzl", "glibc_triple")
 
@@ -10,6 +10,8 @@ def declare_glibc_repository_target(name, bazel_repository, bazel_target, **kwar
         versions = {}
         for libc_version in GLIBCS + ["unconstrained"]:
             apparent_libc_value = libc_version if libc_version != "unconstrained" else DEFAULT_LIBC
+            if not libc_supports_target(apparent_libc_value, target_os, target_arch):
+                continue
 
             # libc constraint values are "gnu.X.Y"; the glibc repos are keyed
             # by the numeric version only.

@@ -178,6 +178,8 @@ Behind the scenes, code is compiled with headers for the selected glibc and link
 
 This ensures your program runs on systems with that glibc version or newer without using newer symbols.
 
+Older glibc versions are available for a subset of targets: 2.17 for x86_64 and 2.23 for aarch64.
+
 ### C++ standard library selection
 
 Both libc++ and libstdc++ are supported. libc++ is selected by default.

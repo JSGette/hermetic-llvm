@@ -1,4 +1,6 @@
 GLIBC_VERSIONS = [
+    "2.17",
+    "2.23",
     "2.28",
     "2.29",
     "2.30",
@@ -17,6 +19,16 @@ GLIBC_VERSIONS = [
     "2.43",
     "2.44",
 ]
+
+# glibc versions older than 2.28 are only provided for these targets.
+LEGACY_GLIBC_TARGETS = {
+    "gnu.2.17": [("linux", "x86_64")],
+    "gnu.2.23": [("linux", "aarch64")],
+}
+
+def libc_supports_target(libc, target_os, target_cpu):
+    targets = LEGACY_GLIBC_TARGETS.get(libc)
+    return targets == None or (target_os, target_cpu) in targets
 
 GLIBCS = ["gnu.{}".format(glibc) for glibc in GLIBC_VERSIONS]
 

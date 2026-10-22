@@ -13,6 +13,7 @@ def glibc_includes(cpu):
         # x86_64 inherits from x86 in glibc's sysdeps Implies hierarchy.
         arch_parent = [
             "sysdeps/unix/sysv/linux/x86",
+            "sysdeps/x86/nptl",
             "sysdeps/x86",
         ]
     elif cpu == "riscv64":
