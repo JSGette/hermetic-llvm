@@ -7,6 +7,7 @@ load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_import.bzl", "cc_import")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("@rules_cc//cc:cc_static_library.bzl", "cc_static_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
@@ -1938,4 +1939,25 @@ exec_test(
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
+)
+
+cc_library(
+    name = "cxx_shared_library_lib",
+    srcs = ["cxx_shared_library.cc"],
+    hdrs = ["cxx_shared_library.h"],
+    local_defines = ["CXX_SHARED_LIBRARY_IMPLEMENTATION"],
+)
+
+cc_shared_library(
+    name = "cxx_shared_library",
+    deps = [":cxx_shared_library_lib"],
+)
+
+cc_test(
+    name = "cxx_shared_library_test",
+    srcs = ["cxx_shared_library_test.cc"],
+    dynamic_deps = [":cxx_shared_library"],
+    # The remote executors only run Linux.
+    exec_properties = {"test.no-remote": "1"},
+    deps = [":cxx_shared_library_lib"],
 )
