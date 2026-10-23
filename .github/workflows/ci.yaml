@@ -101,7 +101,9 @@ jobs:
               --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
               --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
               //:main_windows_x86_64_msvc \
-              //:main_windows_aarch64_msvc
+              //:main_windows_aarch64_msvc \
+              //:main_windows_x86_64_msvc_external_include_paths \
+              //:main_windows_aarch64_msvc_external_include_paths
           fi
 
       # The tests above opt C++ actions into path mapping. Without that opt-in,
