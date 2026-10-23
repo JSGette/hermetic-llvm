@@ -105,6 +105,17 @@ def declare_llvm_targets(*, suffix = ""):
         format = {"llvm_nm": "bin/llvm-nm" + suffix},
     )
 
+    cc_tool(
+        name = "mingw_def_file_generator",
+        src = "@llvm//tools/def_file_generator",
+        data = ["bin/llvm-nm" + suffix],
+        env = {
+            "DEF_FILE_GENERATOR_ABI": "gnu",
+            "LLVM_NM": "{llvm_nm}",
+        },
+        format = {"llvm_nm": "bin/llvm-nm" + suffix},
+    )
+
     TOOLS_WITHOUT_LINKER = {
         "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang",
         "@rules_cc//cc/toolchains/actions:c_compile": ":clang",
@@ -224,6 +235,24 @@ def declare_llvm_targets(*, suffix = ""):
         name = "default_tools_for_runtime",
         actual = select({
             "@llvm//toolchain:runtimes_all": ":default_tools",
+            "//conditions:default": ":staged_default_tools",
+        }),
+        visibility = ["//visibility:public"],
+    )
+
+    cc_tool_map(
+        name = "tools_for_mingw",
+        tools = BASE_TOOLS | COMPLETE_ONLY_TOOLS | {
+            "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
+            "@rules_cc//cc/toolchains/actions:generate_def_file": ":mingw_def_file_generator",
+        },
+        visibility = ["//visibility:public"],
+    )
+
+    native.alias(
+        name = "tools_for_mingw_for_runtime",
+        actual = select({
+            "@llvm//toolchain:runtimes_all": ":tools_for_mingw",
             "//conditions:default": ":staged_default_tools",
         }),
         visibility = ["//visibility:public"],
