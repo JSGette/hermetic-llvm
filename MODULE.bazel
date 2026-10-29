@@ -177,12 +177,12 @@ bazel_dep(name = "rules_platform", version = "0.1.0", dev_dependency = True)
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk", dev_dependency = True)
 go_sdk.download(version = "1.25.0")
 
-GLIBC_STUBS_GENERATOR_COMMIT = "33276300351d5a3cbedd308f4d21669b8e8ef83d"
+GLIBC_STUBS_GENERATOR_COMMIT = "efa413331bbe6dfa89d152273a1df3279b111f45"
 
 bazel_dep(name = "glibc-stubs-generator", version = "2.0.1", dev_dependency = True)
 archive_override(
     module_name = "glibc-stubs-generator",
-    integrity = "sha256-q7bwGW3nRigiGuXj/2kIZMi/LFCHZpVbMD/kRdllLCg=",
+    integrity = "sha256-O/H8P07n6zfe1qcuGxpKslCQ6tp6/Ur9BU69w2qsdxI=",
     strip_prefix = "glibc-stubs-generator-{}".format(GLIBC_STUBS_GENERATOR_COMMIT),
     urls = ["https://github.com/cerisier/glibc-stubs-generator/archive/{}.tar.gz".format(GLIBC_STUBS_GENERATOR_COMMIT)],
 )
